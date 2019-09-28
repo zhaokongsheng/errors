@@ -95,6 +95,7 @@ package errors
 import (
 	"fmt"
 	"io"
+	"strings"
 )
 
 // New returns an error with the supplied message.
@@ -205,13 +206,15 @@ func (w *wrappedError) Unwrap() error {
 }
 
 // Wrap returns an error annotating err with a stack trace
-// at the point Wrap is called, and the supplied message.
+// at the point Wrap is called, and the supplied messages.
+// The messages are join into one message with "\n" separator.
 // If err is nil, Wrap returns nil.
-func Wrap(err error, message string) error {
+func Wrap(err error, messages ...string) error {
 	if err == nil {
 		return nil
 	}
 
+	message := strings.Join(messages, "\n")
 	_, ok := err.(fmt.Formatter)
 	// If err already implements fmt.Formatter, add only the top stack trace
 	if ok {
