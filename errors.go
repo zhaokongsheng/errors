@@ -175,6 +175,35 @@ func (w *withStack) Format(s fmt.State, verb rune) {
 	}
 }
 
+type wrappedError struct {
+	err   error
+	msg   string
+	stack *stack
+}
+
+func (w *wrappedError) Error() string { return w.msg + ": " + w.err.Error() }
+
+func (w *wrappedError) Format(s fmt.State, verb rune) {
+	switch verb {
+	case 'v':
+		if s.Flag('+') {
+			io.WriteString(s, w.msg)
+			w.stack.Format(s, verb)
+			io.WriteString(s, "\n")
+
+			fmt.Fprintf(s, "%+v\n", w.err)
+			return
+		}
+		fallthrough
+	case 's', 'q':
+		io.WriteString(s, w.Error())
+	}
+}
+
+func (w *wrappedError) Unwrap() error {
+	return w.err
+}
+
 // Wrap returns an error annotating err with a stack trace
 // at the point Wrap is called, and the supplied message.
 // If err is nil, Wrap returns nil.
@@ -182,13 +211,21 @@ func Wrap(err error, message string) error {
 	if err == nil {
 		return nil
 	}
-	err = &withMessage{
-		cause: err,
-		msg:   message,
+
+	_, ok := err.(fmt.Formatter)
+	// If err already implements fmt.Formatter, add only the top stack trace
+	if ok {
+		return &wrappedError{
+			err:   err,
+			msg:   message,
+			stack: topCaller(),
+		}
 	}
-	return &withStack{
-		err,
-		callers(),
+
+	return &wrappedError{
+		err:   err,
+		msg:   message,
+		stack: callers(),
 	}
 }
 
@@ -199,13 +236,23 @@ func Wrapf(err error, format string, args ...interface{}) error {
 	if err == nil {
 		return nil
 	}
-	err = &withMessage{
-		cause: err,
-		msg:   fmt.Sprintf(format, args...),
+
+	message := fmt.Sprintf(format, args...)
+
+	_, ok := err.(fmt.Formatter)
+	// If err already implements fmt.Formatter, add only the top stack trace
+	if ok {
+		return &wrappedError{
+			err:   err,
+			msg:   message,
+			stack: topCaller(),
+		}
 	}
-	return &withStack{
-		err,
-		callers(),
+
+	return &wrappedError{
+		err:   err,
+		msg:   message,
+		stack: callers(),
 	}
 }
 
