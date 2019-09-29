@@ -37,14 +37,6 @@ func ExampleNew_printf() {
 	//         /home/dfc/go/src/runtime/asm_amd64.s:2059
 }
 
-func ExampleWithMessage() {
-	cause := errors.New("whoops")
-	err := errors.WithMessage(cause, "oh noes")
-	fmt.Println(err)
-
-	// Output: oh noes: whoops
-}
-
 func ExampleWrap() {
 	cause := errors.New("New error")
 	e1 := errors.Wrap(cause, "first wrap")

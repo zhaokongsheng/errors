@@ -158,67 +158,6 @@ func TestFormatWrapf(t *testing.T) {
 	}
 }
 
-func TestFormatWithMessage(t *testing.T) {
-	tests := []struct {
-		error
-		format string
-		want   []string
-	}{{
-		WithMessage(New("error"), "error2"),
-		"%s",
-		[]string{"error2: error"},
-	}, {
-		WithMessage(New("error"), "error2"),
-		"%v",
-		[]string{"error2: error"},
-	}, {
-		WithMessage(New("error"), "error2"),
-		"%+v",
-		[]string{
-			"error",
-			"github.com/pkg/errors.TestFormatWithMessage\n" +
-				"\t.+/github.com/pkg/errors/format_test.go:244",
-			"error2"},
-	}, {
-		WithMessage(io.EOF, "addition1"),
-		"%s",
-		[]string{"addition1: EOF"},
-	}, {
-		WithMessage(io.EOF, "addition1"),
-		"%v",
-		[]string{"addition1: EOF"},
-	}, {
-		WithMessage(io.EOF, "addition1"),
-		"%+v",
-		[]string{"EOF", "addition1"},
-	}, {
-		WithMessage(WithMessage(io.EOF, "addition1"), "addition2"),
-		"%v",
-		[]string{"addition2: addition1: EOF"},
-	}, {
-		WithMessage(WithMessage(io.EOF, "addition1"), "addition2"),
-		"%+v",
-		[]string{"EOF", "addition1", "addition2"},
-	}, {
-		Wrap(WithMessage(io.EOF, "error1"), "error2"),
-		"%+v",
-		[]string{"EOF", "error1", "error2",
-			"github.com/pkg/errors.TestFormatWithMessage\n" +
-				"\t.+/github.com/pkg/errors/format_test.go:272"},
-	}, {
-		WithMessage(Errorf("error%d", 1), "error2"),
-		"%+v",
-		[]string{"error1",
-			"github.com/pkg/errors.TestFormatWithMessage\n" +
-				"\t.+/github.com/pkg/errors/format_test.go:278",
-			"error2"},
-	}}
-
-	for i, tt := range tests {
-		testFormatCompleteCompare(t, i, tt.error, tt.format, tt.want, true)
-	}
-}
-
 func TestFormatGeneric(t *testing.T) {
 	starts := []struct {
 		err  error
@@ -239,9 +178,6 @@ func TestFormatGeneric(t *testing.T) {
 
 	wrappers := []wrapper{
 		{
-			func(err error) error { return WithMessage(err, "with-message") },
-			[]string{"with-message"},
-		}, {
 			func(err error) error { return Wrap(err, "wrap-error") },
 			[]string{
 				"wrap-error",
