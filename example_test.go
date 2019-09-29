@@ -228,15 +228,3 @@ func ExampleErrorf_extended() {
 	// runtime.goexit
 	//         /home/dfc/go/src/runtime/asm_amd64.s:2059
 }
-
-func ExampleCause_printf() {
-	err := errors.Wrap(func() error {
-		return func() error {
-			return errors.Errorf("hello %s", fmt.Sprintf("world"))
-		}()
-	}(), "failed")
-
-	fmt.Printf("%v", err)
-
-	// Output: failed: hello world
-}
