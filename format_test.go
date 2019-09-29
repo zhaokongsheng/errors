@@ -158,75 +158,6 @@ func TestFormatWrapf(t *testing.T) {
 	}
 }
 
-func TestFormatWithStack(t *testing.T) {
-	tests := []struct {
-		error
-		format string
-		want   []string
-	}{{
-		WithStack(io.EOF),
-		"%s",
-		[]string{"EOF"},
-	}, {
-		WithStack(io.EOF),
-		"%v",
-		[]string{"EOF"},
-	}, {
-		WithStack(io.EOF),
-		"%+v",
-		[]string{"EOF",
-			"github.com/pkg/errors.TestFormatWithStack\n" +
-				"\t.+/github.com/pkg/errors/format_test.go:175"},
-	}, {
-		WithStack(New("error")),
-		"%s",
-		[]string{"error"},
-	}, {
-		WithStack(New("error")),
-		"%v",
-		[]string{"error"},
-	}, {
-		WithStack(New("error")),
-		"%+v",
-		[]string{"error",
-			"github.com/pkg/errors.TestFormatWithStack\n" +
-				"\t.+/github.com/pkg/errors/format_test.go:189",
-			"github.com/pkg/errors.TestFormatWithStack\n" +
-				"\t.+/github.com/pkg/errors/format_test.go:189"},
-	}, {
-		WithStack(WithStack(io.EOF)),
-		"%+v",
-		[]string{"EOF",
-			"github.com/pkg/errors.TestFormatWithStack\n" +
-				"\t.+/github.com/pkg/errors/format_test.go:197",
-			"github.com/pkg/errors.TestFormatWithStack\n" +
-				"\t.+/github.com/pkg/errors/format_test.go:197"},
-	}, {
-		WithStack(WithStack(Wrapf(io.EOF, "message"))),
-		"%+v",
-		[]string{"EOF",
-			"message",
-			"github.com/pkg/errors.TestFormatWithStack\n" +
-				"\t.+/github.com/pkg/errors/format_test.go:205",
-			"github.com/pkg/errors.TestFormatWithStack\n" +
-				"\t.+/github.com/pkg/errors/format_test.go:205",
-			"github.com/pkg/errors.TestFormatWithStack\n" +
-				"\t.+/github.com/pkg/errors/format_test.go:205"},
-	}, {
-		WithStack(Errorf("error%d", 1)),
-		"%+v",
-		[]string{"error1",
-			"github.com/pkg/errors.TestFormatWithStack\n" +
-				"\t.+/github.com/pkg/errors/format_test.go:216",
-			"github.com/pkg/errors.TestFormatWithStack\n" +
-				"\t.+/github.com/pkg/errors/format_test.go:216"},
-	}}
-
-	for i, tt := range tests {
-		testFormatCompleteCompare(t, i, tt.error, tt.format, tt.want, true)
-	}
-}
-
 func TestFormatWithMessage(t *testing.T) {
 	tests := []struct {
 		error
@@ -281,25 +212,6 @@ func TestFormatWithMessage(t *testing.T) {
 			"github.com/pkg/errors.TestFormatWithMessage\n" +
 				"\t.+/github.com/pkg/errors/format_test.go:278",
 			"error2"},
-	}, {
-		WithMessage(WithStack(io.EOF), "error"),
-		"%+v",
-		[]string{
-			"EOF",
-			"github.com/pkg/errors.TestFormatWithMessage\n" +
-				"\t.+/github.com/pkg/errors/format_test.go:285",
-			"error"},
-	}, {
-		WithMessage(Wrap(WithStack(io.EOF), "inside-error"), "outside-error"),
-		"%+v",
-		[]string{
-			"EOF",
-			"github.com/pkg/errors.TestFormatWithMessage\n" +
-				"\t.+/github.com/pkg/errors/format_test.go:293",
-			"inside-error",
-			"github.com/pkg/errors.TestFormatWithMessage\n" +
-				"\t.+/github.com/pkg/errors/format_test.go:293",
-			"outside-error"},
 	}}
 
 	for i, tt := range tests {
@@ -329,12 +241,6 @@ func TestFormatGeneric(t *testing.T) {
 		{
 			func(err error) error { return WithMessage(err, "with-message") },
 			[]string{"with-message"},
-		}, {
-			func(err error) error { return WithStack(err) },
-			[]string{
-				"github.com/pkg/errors.(func·002|TestFormatGeneric.func2)\n\t" +
-					".+/github.com/pkg/errors/format_test.go:333",
-			},
 		}, {
 			func(err error) error { return Wrap(err, "wrap-error") },
 			[]string{
