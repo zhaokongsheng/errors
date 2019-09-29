@@ -63,6 +63,7 @@
 package errors
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -124,10 +125,21 @@ func (w *wrappedError) Format(s fmt.State, verb rune) {
 	case 'v':
 		if s.Flag('+') {
 			io.WriteString(s, w.msg)
-			w.stack.Format(s, verb)
-			io.WriteString(s, "\n")
 
-			fmt.Fprintf(s, "%+v\n", w.err)
+			isRoot := (errors.Unwrap(w.err) == nil)
+			_, isFormatter := w.err.(fmt.Formatter)
+			// Print the wrapped error message between the wrapping message and stack trace
+			// if the wrapped error is the root error and does not implement fmt.Formatter.
+			if isRoot && !isFormatter {
+				fmt.Fprintf(s, "\n%+v", w.err)
+				w.stack.Format(s, verb)
+				io.WriteString(s, "\n")
+			} else {
+				w.stack.Format(s, verb)
+				io.WriteString(s, "\n")
+				fmt.Fprintf(s, "%+v\n", w.err)
+			}
+
 			return
 		}
 		fallthrough

@@ -86,13 +86,13 @@ func ExampleWrap_printv() {
 	// Example Output:
 	// second wrap
 	// github.com/pkg/errors_test.ExampleWrap_printv
-	// 	 /home/fabstu/go/src/github.com/pkg/errors/example_test.go:104
+	// 	/Users/zhao/src/github.com/pkg/errors/example_test.go:83
 	// first wrap
 	// github.com/pkg/errors_test.ExampleWrap_printv
-	// 	 /home/fabstu/go/src/github.com/pkg/errors/example_test.go:103
+	// 	/Users/zhao/src/github.com/pkg/errors/example_test.go:82
 	// New error
 	// github.com/pkg/errors_test.ExampleWrap_printv
-	// 	 /home/fabstu/go/src/github.com/pkg/errors/example_test.go:102
+	// 	/Users/zhao/src/github.com/pkg/errors/example_test.go:81
 	// testing.runExample
 	// 	/usr/local/go/src/testing/run_example.go:62
 	// testing.runExamples
@@ -100,7 +100,35 @@ func ExampleWrap_printv() {
 	// testing.(*M).Run
 	// 	/usr/local/go/src/testing/testing.go:1118
 	// main.main
-	// 	_testmain.go:120
+	// 	_testmain.go:100
+	// runtime.main
+	// 	/usr/local/go/src/runtime/proc.go:203
+	// runtime.goexit
+	// 	/usr/local/go/src/runtime/asm_amd64.s:1357
+}
+
+func ExampleWrap_printv_std() {
+	cause := fmt.Errorf("Errorf error %s", "test")
+	e1 := errors.Wrap(cause, "first wrap")
+	e2 := errors.Wrap(e1, "second wrap")
+	fmt.Printf("%+v", e2)
+
+	// Example Output:
+	// second wrap
+	// github.com/pkg/errors_test.ExampleWrap_printv_std
+	// 	/Users/zhao/src/github.com/pkg/errors/example_test.go:113
+	// first wrap
+	// Errorf error test
+	// github.com/pkg/errors_test.ExampleWrap_printv_std
+	// 	/Users/zhao/src/github.com/pkg/errors/example_test.go:112
+	// testing.runExample
+	// 	/usr/local/go/src/testing/run_example.go:62
+	// testing.runExamples
+	// 	/usr/local/go/src/testing/example.go:44
+	// testing.(*M).Run
+	// 	/usr/local/go/src/testing/testing.go:1118
+	// main.main
+	// 	_testmain.go:100
 	// runtime.main
 	// 	/usr/local/go/src/runtime/proc.go:203
 	// runtime.goexit
