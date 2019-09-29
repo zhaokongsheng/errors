@@ -1,7 +1,6 @@
 package errors
 
 import (
-	"fmt"
 	"runtime"
 	"testing"
 )
@@ -128,29 +127,11 @@ func TestStackTrace(t *testing.T) {
 				"\t.+/github.com/pkg/errors/stack_test.go:126", // this is the stack of Wrap, not New
 		},
 	}, {
-		Cause(Wrap(New("ooh"), "ahh")), []string{
-			"github.com/pkg/errors.TestStackTrace\n" +
-				"\t.+/github.com/pkg/errors/stack_test.go:131", // this is the stack of New
-		},
-	}, {
 		func() error { return New("ooh") }(), []string{
 			`github.com/pkg/errors.TestStackTrace.func1` +
 				"\n\t.+/github.com/pkg/errors/stack_test.go:136", // this is the stack of New
 			"github.com/pkg/errors.TestStackTrace\n" +
 				"\t.+/github.com/pkg/errors/stack_test.go:136", // this is the stack of New's caller
-		},
-	}, {
-		Cause(func() error {
-			return func() error {
-				return Errorf("hello %s", fmt.Sprintf("world"))
-			}()
-		}()), []string{
-			`github.com/pkg/errors.TestStackTrace.func2.1` +
-				"\n\t.+/github.com/pkg/errors/stack_test.go:145", // this is the stack of Errorf
-			`github.com/pkg/errors.TestStackTrace.func2` +
-				"\n\t.+/github.com/pkg/errors/stack_test.go:146", // this is the stack of Errorf's caller
-			"github.com/pkg/errors.TestStackTrace\n" +
-				"\t.+/github.com/pkg/errors/stack_test.go:147", // this is the stack of Errorf's caller's caller
 		},
 	}}
 	for i, tt := range tests {

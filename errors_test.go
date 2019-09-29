@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"reflect"
 	"testing"
 )
 
@@ -55,56 +54,6 @@ func TestWrap(t *testing.T) {
 type nilError struct{}
 
 func (nilError) Error() string { return "nil error" }
-
-func TestCause(t *testing.T) {
-	x := New("error")
-	tests := []struct {
-		err  error
-		want error
-	}{{
-		// nil error is nil
-		err:  nil,
-		want: nil,
-	}, {
-		// explicit nil error is nil
-		err:  (error)(nil),
-		want: nil,
-	}, {
-		// typed nil is nil
-		err:  (*nilError)(nil),
-		want: (*nilError)(nil),
-	}, {
-		// uncaused error is unaffected
-		err:  io.EOF,
-		want: io.EOF,
-	}, {
-		// caused error returns cause
-		err:  Wrap(io.EOF, "ignored"),
-		want: io.EOF,
-	}, {
-		err:  x, // return from errors.New
-		want: x,
-	}, {
-		WithMessage(nil, "whoops"),
-		nil,
-	}, {
-		WithMessage(io.EOF, "whoops"),
-		io.EOF,
-	}, {
-		WithStack(nil),
-		nil,
-	}, {
-		WithStack(io.EOF),
-		io.EOF,
-	}}
-
-	for i, tt := range tests {
-		got := Cause(tt.err)
-		if !reflect.DeepEqual(got, tt.want) {
-			t.Errorf("test %d: got %#v, want %#v", i+1, got, tt.want)
-		}
-	}
-}
 
 func TestWrapfNil(t *testing.T) {
 	got := Wrapf(nil, "no error")

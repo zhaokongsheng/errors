@@ -214,15 +214,6 @@ func fn() error {
 	return errors.Wrap(e3, "outer")
 }
 
-func ExampleCause() {
-	err := fn()
-	fmt.Println(err)
-	fmt.Println(errors.Cause(err))
-
-	// Output: outer: middle: inner: error
-	// error
-}
-
 func ExampleWrap_extended() {
 	err := fn()
 	fmt.Printf("%+v\n", err)
@@ -281,26 +272,6 @@ func ExampleErrorf_extended() {
 	//         /home/dfc/go/src/runtime/proc.go:183
 	// runtime.goexit
 	//         /home/dfc/go/src/runtime/asm_amd64.s:2059
-}
-
-func Example_stackTrace() {
-	type stackTracer interface {
-		StackTrace() errors.StackTrace
-	}
-
-	err, ok := errors.Cause(fn()).(stackTracer)
-	if !ok {
-		panic("oops, err does not implement stackTracer")
-	}
-
-	st := err.StackTrace()
-	fmt.Printf("%+v", st[0:2]) // top two frames
-
-	// Example output:
-	// github.com/pkg/errors_test.fn
-	//	/home/dfc/src/github.com/pkg/errors/example_test.go:47
-	// github.com/pkg/errors_test.Example_stackTrace
-	//	/home/dfc/src/github.com/pkg/errors/example_test.go:127
 }
 
 func ExampleCause_printf() {
