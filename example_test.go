@@ -1,7 +1,9 @@
 package errors_test
 
 import (
+	stderrors "errors"
 	"fmt"
+	"io"
 
 	"github.com/pkg/errors"
 )
@@ -35,65 +37,149 @@ func ExampleNew_printf() {
 	//         /home/dfc/go/src/runtime/asm_amd64.s:2059
 }
 
-func ExampleWithMessage() {
-	cause := errors.New("whoops")
-	err := errors.WithMessage(cause, "oh noes")
-	fmt.Println(err)
+func ExampleWrap() {
+	cause := errors.New("New error")
+	e1 := errors.Wrap(cause, "first wrap")
+	e2 := errors.Wrap(e1, "second wrap")
+	fmt.Printf("%v", e2)
 
-	// Output: oh noes: whoops
+	// Output:
+	// second wrap: first wrap: New error
 }
 
-func ExampleWithStack() {
-	cause := errors.New("whoops")
-	err := errors.WithStack(cause)
-	fmt.Println(err)
-
-	// Output: whoops
+type myErr struct {
+	msg string
 }
 
-func ExampleWithStack_printf() {
-	cause := errors.New("whoops")
-	err := errors.WithStack(cause)
-	fmt.Printf("%+v", err)
+func (e *myErr) Error() string { return "myErr" }
+
+type myErr2 struct {
+	msg string
+}
+
+func (e *myErr2) Error() string { return "myErr2" }
+
+func ExampleWrap_errors_is_as() {
+	eMine1 := &myErr{msg: "abc"}
+	eMine2 := &myErr{msg: "bcd"}
+	e1 := errors.Wrap(eMine1, "first wrap")
+	e2 := errors.Wrap(e1, "second wrap")
+	var unwrappedErr *myErr
+	ok1 := stderrors.As(e2, &unwrappedErr)
+	var unwrappedErr2 *myErr2
+	ok2 := stderrors.As(e2, &unwrappedErr2)
+	fmt.Printf("%v: %v: %v: %v: %v: %v: %v", e2,
+		ok1, stderrors.Is(e2, eMine1), unwrappedErr == eMine1,
+		ok2, stderrors.Is(e2, eMine2), unwrappedErr == eMine2,
+	)
+
+	// Output:
+	// second wrap: first wrap: myErr: true: true: true: false: false: false
+}
+
+func ExampleWrap_printv() {
+	cause := errors.New("New error")
+	e1 := errors.Wrap(cause, "first wrap")
+	e2 := errors.Wrap(e1, "second wrap")
+	fmt.Printf("%+v", e2)
 
 	// Example Output:
-	// whoops
-	// github.com/pkg/errors_test.ExampleWithStack_printf
-	//         /home/fabstu/go/src/github.com/pkg/errors/example_test.go:55
+	// second wrap
+	// github.com/pkg/errors_test.ExampleWrap_printv
+	// 	/Users/zhao/src/github.com/pkg/errors/example_test.go:83
+	// first wrap
+	// github.com/pkg/errors_test.ExampleWrap_printv
+	// 	/Users/zhao/src/github.com/pkg/errors/example_test.go:82
+	// New error
+	// github.com/pkg/errors_test.ExampleWrap_printv
+	// 	/Users/zhao/src/github.com/pkg/errors/example_test.go:81
 	// testing.runExample
-	//         /usr/lib/go/src/testing/example.go:114
-	// testing.RunExamples
-	//         /usr/lib/go/src/testing/example.go:38
+	// 	/usr/local/go/src/testing/run_example.go:62
+	// testing.runExamples
+	// 	/usr/local/go/src/testing/example.go:44
 	// testing.(*M).Run
-	//         /usr/lib/go/src/testing/testing.go:744
+	// 	/usr/local/go/src/testing/testing.go:1118
 	// main.main
-	//         github.com/pkg/errors/_test/_testmain.go:106
+	// 	_testmain.go:100
 	// runtime.main
-	//         /usr/lib/go/src/runtime/proc.go:183
+	// 	/usr/local/go/src/runtime/proc.go:203
 	// runtime.goexit
-	//         /usr/lib/go/src/runtime/asm_amd64.s:2086
-	// github.com/pkg/errors_test.ExampleWithStack_printf
-	//         /home/fabstu/go/src/github.com/pkg/errors/example_test.go:56
-	// testing.runExample
-	//         /usr/lib/go/src/testing/example.go:114
-	// testing.RunExamples
-	//         /usr/lib/go/src/testing/example.go:38
-	// testing.(*M).Run
-	//         /usr/lib/go/src/testing/testing.go:744
-	// main.main
-	//         github.com/pkg/errors/_test/_testmain.go:106
-	// runtime.main
-	//         /usr/lib/go/src/runtime/proc.go:183
-	// runtime.goexit
-	//         /usr/lib/go/src/runtime/asm_amd64.s:2086
+	// 	/usr/local/go/src/runtime/asm_amd64.s:1357
 }
 
-func ExampleWrap() {
-	cause := errors.New("whoops")
-	err := errors.Wrap(cause, "oh noes")
-	fmt.Println(err)
+func ExampleWrap_printv_std() {
+	cause := fmt.Errorf("Errorf error %s", "test")
+	e1 := errors.Wrap(cause, "first wrap")
+	e2 := errors.Wrap(e1, "second wrap")
+	fmt.Printf("%+v", e2)
 
-	// Output: oh noes: whoops
+	// Example Output:
+	// second wrap
+	// github.com/pkg/errors_test.ExampleWrap_printv_std
+	// 	/Users/zhao/src/github.com/pkg/errors/example_test.go:113
+	// first wrap
+	// Errorf error test
+	// github.com/pkg/errors_test.ExampleWrap_printv_std
+	// 	/Users/zhao/src/github.com/pkg/errors/example_test.go:112
+	// testing.runExample
+	// 	/usr/local/go/src/testing/run_example.go:62
+	// testing.runExamples
+	// 	/usr/local/go/src/testing/example.go:44
+	// testing.(*M).Run
+	// 	/usr/local/go/src/testing/testing.go:1118
+	// main.main
+	// 	_testmain.go:100
+	// runtime.main
+	// 	/usr/local/go/src/runtime/proc.go:203
+	// runtime.goexit
+	// 	/usr/local/go/src/runtime/asm_amd64.s:1357
+}
+
+type myFormatterErr struct {
+	msg string
+}
+
+func (e *myFormatterErr) Error() string { return e.msg }
+
+func (e *myFormatterErr) Format(s fmt.State, verb rune) {
+	switch verb {
+	case 'v':
+		if s.Flag('+') {
+			io.WriteString(s, "+v "+e.Error())
+			return
+		}
+		fallthrough
+	case 's':
+		io.WriteString(s, e.Error())
+	case 'q':
+		fmt.Fprintf(s, "%q", e.Error())
+	}
+}
+
+func ExampleWrap_print_formatter() {
+	cause := &myFormatterErr{msg: "myFormatterErr msg"}
+	e1 := errors.Wrap(cause, "first wrap")
+	e2 := errors.Wrap(e1, "second wrap")
+	fmt.Printf("%v", e2)
+
+	// Output:
+	// second wrap: first wrap: myFormatterErr msg
+}
+
+func ExampleWrap_printv_formatter() {
+	cause := &myFormatterErr{msg: "myFormatterErr msg"}
+	e1 := errors.Wrap(cause, "first wrap")
+	e2 := errors.Wrap(e1, "second wrap")
+	fmt.Printf("%+v", e2)
+
+	// Example Output:
+	// second wrap
+	// github.com/pkg/errors_test.ExampleWrap_printv_formatter
+	// 	/home/fabstu/go/src/github.com/pkg/errors/example_test.go:189
+	// first wrap
+	// github.com/pkg/errors_test.ExampleWrap_printv_formatter
+	// 	/home/fabstu/go/src/github.com/pkg/errors/example_test.go:188
+	// +v myFormatterErr msg
 }
 
 func fn() error {
@@ -101,15 +187,6 @@ func fn() error {
 	e2 := errors.Wrap(e1, "inner")
 	e3 := errors.Wrap(e2, "middle")
 	return errors.Wrap(e3, "outer")
-}
-
-func ExampleCause() {
-	err := fn()
-	fmt.Println(err)
-	fmt.Println(errors.Cause(err))
-
-	// Output: outer: middle: inner: error
-	// error
 }
 
 func ExampleWrap_extended() {
@@ -170,36 +247,4 @@ func ExampleErrorf_extended() {
 	//         /home/dfc/go/src/runtime/proc.go:183
 	// runtime.goexit
 	//         /home/dfc/go/src/runtime/asm_amd64.s:2059
-}
-
-func Example_stackTrace() {
-	type stackTracer interface {
-		StackTrace() errors.StackTrace
-	}
-
-	err, ok := errors.Cause(fn()).(stackTracer)
-	if !ok {
-		panic("oops, err does not implement stackTracer")
-	}
-
-	st := err.StackTrace()
-	fmt.Printf("%+v", st[0:2]) // top two frames
-
-	// Example output:
-	// github.com/pkg/errors_test.fn
-	//	/home/dfc/src/github.com/pkg/errors/example_test.go:47
-	// github.com/pkg/errors_test.Example_stackTrace
-	//	/home/dfc/src/github.com/pkg/errors/example_test.go:127
-}
-
-func ExampleCause_printf() {
-	err := errors.Wrap(func() error {
-		return func() error {
-			return errors.Errorf("hello %s", fmt.Sprintf("world"))
-		}()
-	}(), "failed")
-
-	fmt.Printf("%v", err)
-
-	// Output: failed: hello world
 }
